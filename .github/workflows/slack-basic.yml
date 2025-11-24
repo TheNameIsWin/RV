@@ -1,25 +1,46 @@
-name: "Slack Notification Test"
-run-name: "Slack Test Run"
+name: "Slack PR Title Test"
+run-name: "PR Title Test"
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Enter PR Number"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  notify:
+  send-slack:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
+      - name: Get PR Title
+        id: pr
+        run: |
+          PR="${{ inputs.pr_number }}"
+          echo "Fetching PR #$PR"
+
+          API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/$PR"
+
+          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" "$API_URL")
+
+          TITLE=$(echo "$RESPONSE" | jq -r '.title // empty')
+
+          if [ -z "$TITLE" ]; then
+            TITLE="(Could not fetch PR title)"
+          fi
+
+          echo "title_output=$TITLE" >> $GITHUB_OUTPUT
 
       - name: Send Slack Message
         uses: slackapi/slack-github-action@v1.25.0
         with:
           payload: |
             {
-              "text": "🚀 Test Notification from GitHub Actions — Workflow Successful!"
+              "text": "🚀 *Deployment Triggered*\n*PR:* #${{ inputs.pr_number }}\n*Title:* ${{ steps.pr.outputs.title_output }}"
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK}}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
