@@ -15,6 +15,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Make script executable
         run: chmod +x scripts/get_deployment_info.sh
 
@@ -26,12 +29,12 @@ jobs:
             "${{ inputs.pr_number }}" \
             "${{ secrets.PAT_TOKEN }}"
 
-      - name: Send Slack Notification
-        uses: slackapi/slack-github-action@v1.23.0
+      - name: Slack Notification
+        uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
-              "text": "Deployment Info: ${{ steps.prinfo.outputs.pr_title }}"
+              "text": "*Deployment Info*\n• *PR #:* #${{ inputs.pr_number }}\n• *Title:* ${{ steps.prinfo.outputs.pr_title }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
