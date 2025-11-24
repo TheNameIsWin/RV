@@ -43,4 +43,4 @@ jobs:
               "text": "🚀 *Deployment Triggered*\n*PR:* #${{ inputs.pr_number }}\n*Title:* ${{ steps.pr.outputs.title_output }}"
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK}}
