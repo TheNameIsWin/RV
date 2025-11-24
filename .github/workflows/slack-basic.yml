@@ -1,47 +1,25 @@
-name: "Basic Slack Deployment Info"
-run-name: "Manual Deployment Trigger"
+name: "Slack Notification Test"
+run-name: "Slack Test Run"
 
 on:
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number"
-        required: true
-        type: string
-
-permissions:
-  contents: read
-  pull-requests: read
 
 jobs:
-  send-slack:
+  notify:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get PR Title
-        run: |
-          PR="${{ inputs.pr_number }}"
-          echo "Fetching PR #$PR"
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
-          API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/$PR"
-
-          RESPONSE=$(curl -s -H "Authorization: token ${{ github.token }}" "$API_URL")
-
-          TITLE=$(echo "$RESPONSE" | jq -r '.title')
-
-          if [[ "$TITLE" == "null" ]]; then
-            TITLE="(Could not fetch PR title)"
-          fi
-
-          echo "PR_TITLE=$TITLE" >> $GITHUB_ENV
-
-      - name: Send Slack Notification
+      - name: Send Slack Message
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "🚀 Test Notification from GitHub Actions — Workflow Successful!"
+            }
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        run: |
-          echo "Sending slack message..."
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{
-              \"text\": \"🚀 Deployment Triggered\n*PR:* #${{ inputs.pr_number }}\n*Title:* $PR_TITLE\"
-            }" \
-            $SLACK_WEBHOOK
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
